@@ -76,14 +76,16 @@ const SYSTEM_PROMPT =
   "You are the official community AI for FURTUNE (" + TICKER + "), a meme token on BNB Smart Chain. " +
   "Lore: In ancient China, \u8D22\u5BCC (Cai Fu), the guardian of prosperity, hid treasures across the land. " +
   "Those who find and unite these treasures are granted boundless fortune. The mission is to hunt for \u8D22\u5BCC and unleash its power. " +
-  "CA: " + CA + ". Chart: " + CHART + ". Buy: " + BUY_LINK + ". Twitter: " + TWITTER + ". " +
-  "Supply: 80,000,000. Max wallet: 4.2%. Tax: 5% buy / 5% sell. Chain: BNB Smart Chain. " +
-  "Personality: calm, confident, warm, genuinely bullish. Never fake hype. Never corporate or robotic. " +
-  "Every reply must feel different - vary words, structure, and energy every time. " +
-  "Short questions = short punchy answers (1-3 lines). Detailed questions = up to 5 lines. " +
+  "CA: " + CA + ". Supply: 80,000,000. Max wallet: 4.2%. Tax: 5% buy / 5% sell. Chain: BNB Smart Chain. " +
+  "Contract is renounced. LP is locked. Twitter/X is live at @furtune_bsc. " +
+  "Personality: calm, confident, warm, real. Never corporate. Never stiff. " +
+  "Never use phrases like: vibrant community, feel free to explore, embark on, thrilling quest, do not hesitate. " +
+  "Every reply must feel different - vary words, structure, energy every time. " +
+  "Short questions = 1-3 lines max. Detailed questions = up to 5 lines max. " +
   "Use minimal emojis. Never place an emoji directly after the contract address. " +
+  "NEVER output raw URLs in any reply - the bot handles links separately. " +
   "Never share any Telegram group link. Never volunteer the CA unless directly asked. " +
-  "Only answer direct questions about the project. For anything else respond with exactly the word: IGNORE";
+  "Only answer direct questions about the project. For anything vague or casual respond with exactly: IGNORE";
 
 // --- Helpers ---
 async function isAdmin(telegram, chatId, userId) {
@@ -151,7 +153,7 @@ async function ai(prompt) {
 // --- Triggers ---
 const CA_RE      = /\b(ca|contract|address|addy)\b|^\/ca$/i;
 const SOCIALS_RE = /\b(socials|links)\b|^\/socials$|^\/links$/i;
-const TWITTER_RE = /\b(twitter)\b|^\/x$|^\/twitter$/i;
+const TWITTER_RE = /\b(twitter)\b|^\/x$|^\/twitter$|^x$/i;
 const IGNORE_RE  = /^(gm|gn|lol|nice|wow|ok|based|fr|lfg|wagmi|ngmi|fomo|dyor|nfa|wen|soon|yes|no|pump|dump|moon|hold|hodl|buy|sell|ape|chad|rekt|fud|shill|ez|cope|ser|anon|bro|fam|gg|kek|fire|lit|up only|bullish|bearish|imagine|same|facts|true|this|real|100|sheesh|damn|haha|lmao|legend|goat|king|queen|grind|bless|1000x|100x|x100)$/i;
 const HYPE_RE    = /^(let'?s go+!*|lfg+!*|send it+!*|to the moon+!*|we'?re so back|up only!*|this is it!*|we're gonna make it|gm everyone|good morning|good night)$/i;
 const QUESTION_RE = /\?|what|who|when|where|why|how|tell me|explain|is there|does|do you|are you|will|should|can you|could you/i;
@@ -175,15 +177,22 @@ bot.on("new_chat_members", async (ctx) => {
     const name = member.first_name || "hunter";
     const prompt =
       "New member '" + name + "' just joined the FURTUNE (" + TICKER + ") Telegram group. " +
-      "Write a unique welcome (max 4 lines). Weave in the CA (" + CA + ") and chart (" + CHART + ") naturally. " +
-      "Never include a Telegram group link. Never start the same way twice. " +
-      "Never place an emoji directly after the contract address. Warm, confident, never robotic.";
+      "Write a 1-2 line welcome only. Short, warm, real. Tie in the Cai Fu lore naturally. " +
+      "Never start with Hello or Welcome. Never be corporate. Never output any URLs or links. " +
+      "Never say: vibrant, embark, thrilling, do not hesitate, feel free. " +
+      "No emojis after the name. Vary the opener every single time.";
 
-    const welcome = await ai(prompt);
-    if (!welcome || welcome === "IGNORE") continue;
+    const greeting = await ai(prompt);
+    if (!greeting || greeting === "IGNORE") continue;
+
+    const welcome =
+      greeting + "\n\n" +
+      "\u{1F4C8} <a href=\"" + CHART + "\">Chart</a>  |  " +
+      "\u{1F95E} <a href=\"" + BUY_LINK + "\">Buy</a>\n" +
+      "CA: <code>" + CA + "</code>";
 
     try {
-      const sent = await ctx.telegram.sendMessage(chatId, welcome);
+      const sent = await ctx.telegram.sendMessage(chatId, welcome, { parse_mode: "HTML", disable_web_page_preview: true });
       welcomeMsgIds[chatId] = sent.message_id;
       delMsg(ctx.telegram, chatId, sent.message_id, 60000);
     } catch (_) {}
