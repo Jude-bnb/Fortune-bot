@@ -39,6 +39,27 @@ let   lastSilenceAngle = -1;
 
 const SILENCE_MS = 30 * 60 * 1000;
 
+// --- Rotating short CA captions (Baby Siren style) ---
+const CA_OPENERS = [
+  "\u{1F4B0} " + TICKER + " lives here:",
+  "\u{1F3AF} The treasure address:",
+  "\u26D3\uFE0F Hunt starts here:",
+  "\u{1F9E7} Cai Fu\u2019s address:",
+  "\u{1F4CD} " + TICKER + " on BNB:",
+  "\u{1F511} The key to fortune:",
+  "\u{1F30F} Find it. Buy it. Hold it.",
+];
+const CA_CLOSERS = [
+  "Verify on DexScreener. Stay safe fren.",
+  "Paste it on PancakeSwap. Ape in.",
+  "Cross-check before you connect your wallet.",
+  "The hunt is real. The address is verified.",
+  "Ancient treasure. Modern chain.",
+  "Only trust this address. Nothing else.",
+  "Cai Fu doesn\u2019t repeat himself.",
+];
+let lastCaIdx = -1;
+
 // --- 7 silence breaker angles ---
 const SILENCE_ANGLES = [
   "\u8D22\u5BCC stirs in the shadows. The treasure hunt is never over.",
@@ -224,17 +245,24 @@ bot.on("message", async (ctx) => {
       delMsg(ctx.telegram, chatId, lastCaMsgId[chatId]);
       delete lastCaMsgId[chatId];
     }
-    const cap = await ai(
-      "Write a short varied caption (1-2 lines) introducing the FURTUNE (" + TICKER + ") contract address. " +
-      "Change the opener, tone, and structure every time. Never robotic. Tie in the lore or mission when it feels natural."
-    ) || "The treasure address.";
+
+    // Pick non-repeating index
+    let idx;
+    do { idx = Math.floor(Math.random() * CA_OPENERS.length); }
+    while (idx === lastCaIdx && CA_OPENERS.length > 1);
+    lastCaIdx = idx;
+
+    const cap =
+      CA_OPENERS[idx] + "\n\n" +
+      CA + "\n\n" +
+      CA_CLOSERS[idx];
 
     try {
       const sent = await ctx.telegram.sendPhoto(
         chatId,
         { source: fs.createReadStream(IMAGE) },
         {
-          caption: cap + "\n\n" + CA,
+          caption: cap,
           reply_markup: {
             inline_keyboard: [[
               { text: "\u{1F4CB} Copy CA", copy_text: { text: CA } }
