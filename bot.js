@@ -342,3 +342,7 @@ bot.launch({
 
 process.once("SIGINT",  () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
+
+// --- Global crash guard (prevents runtime errors from killing the process) ---
+process.on("uncaughtException",  (err) => { console.error("Uncaught:", err.message); });
+process.on("unhandledRejection", (err) => { console.error("Unhandled:", err && err.message ? err.message : err); });
