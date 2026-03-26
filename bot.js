@@ -277,28 +277,25 @@ bot.on("message", async (ctx) => {
 
   // --- Socials trigger ---
   if (SOCIALS_RE.test(text)) {
-    const reply = await ai(
-      "Write a short varied socials reply for FURTUNE (" + TICKER + "). " +
-      "Include Twitter (" + TWITTER + "), chart (" + CHART + "), and buy link (" + BUY_LINK + "). " +
-      "Vary the format, order, and energy every time. Never include a Telegram group link."
-    );
-    if (reply && reply !== "IGNORE") {
-      try { await ctx.reply(reply); } catch (_) {}
-    }
+    const socials =
+      "\u{1F30D} <b>" + TICKER + " Official Links</b>\n\n" +
+      "\u{1F426} <a href=\"" + TWITTER + "\">Twitter / X</a>\n" +
+      "\u{1F4C8} <a href=\"" + CHART + "\">Chart (DexScreener)</a>\n" +
+      "\u{1F95E} <a href=\"" + BUY_LINK + "\">Buy on PancakeSwap</a>\n\n" +
+      "Always verify links before connecting your wallet. \u2705";
+    try {
+      await ctx.telegram.sendMessage(chatId, socials, { parse_mode: "HTML", disable_web_page_preview: true });
+    } catch (_) {}
     return;
   }
 
   // --- X/Twitter trigger ---
   if (TWITTER_RE.test(text)) {
-    const cap = await ai(
-      "One-line caption for the FURTUNE (" + TICKER + ") Twitter/X reveal. " +
-      "Different every time. Short and punchy."
-    ) || "Follow the hunt.";
     try {
       await ctx.telegram.sendPhoto(
         chatId,
         { source: fs.createReadStream(IMAGE) },
-        { caption: cap + "\n\n" + TWITTER }
+        { caption: "\u{1F426} Follow the hunt on X\n\n" + TWITTER }
       );
     } catch (_) {}
     return;
@@ -321,8 +318,8 @@ bot.on("message", async (ctx) => {
 });
 
 // --- Keep-alive server for cron-job.org pings ---
-http.createServer((_, res) => res.end("OK")).listen(PORT, () => {
-  console.log("Keep-alive server listening on port " + PORT);
+http.createServer((req, res) => { res.writeHead(200, { "Content-Type": "text/plain" }); res.end("OK"); }).listen(PORT, () => {
+  console.log("Keep-alive server on port " + PORT);
 });
 
 // --- Launch bot ---
