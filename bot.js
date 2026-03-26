@@ -2,7 +2,6 @@
 
 const { Telegraf } = require("telegraf");
 const Groq         = require("groq-sdk");
-const http         = require("http");
 const fs           = require("fs");
 const path         = require("path");
 
@@ -10,9 +9,10 @@ const path         = require("path");
 const BOT_TOKEN    = process.env.BOT_TOKEN;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const PORT         = process.env.PORT || 3000;
+const WEBHOOK_URL  = process.env.WEBHOOK_URL;
 
-if (!BOT_TOKEN || !GROQ_API_KEY) {
-  console.error("Missing BOT_TOKEN or GROQ_API_KEY");
+if (!BOT_TOKEN || !GROQ_API_KEY || !WEBHOOK_URL) {
+  console.error("Missing BOT_TOKEN, GROQ_API_KEY or WEBHOOK_URL");
   process.exit(1);
 }
 
@@ -326,14 +326,15 @@ bot.on("message", async (ctx) => {
   } catch (_) {}
 });
 
-// --- Keep-alive server for cron-job.org pings ---
-http.createServer((req, res) => { res.writeHead(200, { "Content-Type": "text/plain" }); res.end("OK"); }).listen(PORT, () => {
-  console.log("Keep-alive server on port " + PORT);
-});
-
-// --- Launch bot ---
-bot.launch().then(() => {
-  console.log(NAME + " bot is live.");
+// --- Webhook mode + keep-alive on same port ---
+bot.launch({
+  webhook: {
+    domain: WEBHOOK_URL,
+    port: PORT,
+    hookPath: "/webhook",
+  }
+}).then(() => {
+  console.log(NAME + " bot live (webhook mode) on port " + PORT);
 }).catch((err) => {
   console.error("Launch failed:", err.message);
   process.exit(1);
